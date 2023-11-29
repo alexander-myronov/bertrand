@@ -12,6 +12,16 @@ BERT_CONFIG = BertConfig(
     intermediate_size=2048,
 )
 
+BERT_CONFIG_PTCR = BertConfig(
+    vocab_size=tokenizer.vocab_size,
+    max_position_embeddings=64,
+    type_vocab_size=3,
+    num_attention_heads=8,
+    num_hidden_layers=8,
+    hidden_size=512,
+    intermediate_size=2048,
+)
+
 # # Training args for peptide:TCR binding prediction
 # SUPERVISED_TRAINING_ARGS = dict(
 #     num_train_epochs=25,  # total number of training epochs

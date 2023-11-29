@@ -4,7 +4,7 @@ library(pbmcapply)
 
 insertion_and_deletion_lengths_df <- load_insdel_data()
 
-starts <- 1:55
+starts <- 1:1000
 fx <- function(n)
 {
   sim_repertoire_TRB <-immuneSIM(
@@ -37,5 +37,5 @@ results <- pbmclapply(starts, fx, mc.cores = numCores)
 
 dt <- do.call("rbind", results)
 rownames(dt) <- 1:nrow(dt)
-write.csv(dt, '~/Documents/bertrand/data/immrep/simulated_cdr3ab_small.csv')
+write.csv(dt, '~/Documents/bertrand/data/immrep/simulated_cdr3ab_1M_2.csv')
 
