@@ -82,4 +82,4 @@ if __name__ == "__main__":
         data_collator=data_collator,  # data collator
     )
 
-    trainer.train()
+    trainer.train(resume_from_checkpoint=True)
