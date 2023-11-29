@@ -13,7 +13,7 @@ from transformers import (
 
 from bertrand.model.tokenization import tokenizer
 from bertrand.immrep.pretraining.dataset_ptcr import PeptideTCRMLMDataset
-from bertrand.immrep.training.config import BERT_CONFIG_PTCR, MLM_TRAINING_ARGS
+from bertrand.immrep.training.config import BERT_CONFIG_PTCR, MLM_TRAINING_ARGS_PTCR
 
 def parse_args() -> argparse.Namespace:
     """
@@ -48,7 +48,7 @@ def get_training_args(output_dir: str) -> TrainingArguments:
     :return: training args
     """
     training_args = TrainingArguments(
-        output_dir=output_dir, **MLM_TRAINING_ARGS,  # output directory
+        output_dir=output_dir, **MLM_TRAINING_ARGS_PTCR,  # output directory
     )
     return training_args
 
