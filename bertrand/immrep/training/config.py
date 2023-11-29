@@ -4,7 +4,7 @@ from bertrand.model.tokenization import tokenizer
 # BERT config, i.e. number of Transformer layers, attention heads, embedding dimension sizes
 BERT_CONFIG = BertConfig(
     vocab_size=tokenizer.vocab_size,
-    max_position_embeddings=50,
+    max_position_embeddings=64,
     type_vocab_size=2,
     num_attention_heads=8,
     num_hidden_layers=8,
@@ -29,8 +29,8 @@ BERT_CONFIG = BertConfig(
 # Training args for MLM
 MLM_TRAINING_ARGS = dict(
     num_train_epochs=100,  # total number of training epochs
-    per_device_train_batch_size=32,  # batch size per device during training
-    per_device_eval_batch_size=64,  # batch size for evaluation
+    per_device_train_batch_size=1024,  # batch size per device during training
+    per_device_eval_batch_size=1024,  # batch size for evaluation
     warmup_steps=10000,  # number of warmup steps for learning rate scheduler
     learning_rate=5e-5,  # learning rate
     weight_decay=1e-4,  # strength of weight decay
