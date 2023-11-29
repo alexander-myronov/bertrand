@@ -58,11 +58,11 @@ if __name__ == "__main__":
     args = parse_args()
 
     output_dir = os.path.join(args.out_dir, "checkpoints")
-    if os.path.isdir(output_dir) and len(glob(os.path.join(output_dir, "**/"))) > 0:
-        logging.info(
-            f"Some checkpoints are present in {output_dir}, (re)move them or set another out-dir"
-        )
-        exit(0)
+    # if os.path.isdir(output_dir) and len(glob(os.path.join(output_dir, "**/"))) > 0:
+    #     logging.info(
+    #         f"Some checkpoints are present in {output_dir}, (re)move them or set another out-dir"
+    #     )
+    #     exit(0)
     train = pd.read_csv(args.train)
     val = pd.read_csv(args.val)
     train_dataset = TCRMLMDataset(train)
