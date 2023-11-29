@@ -20,13 +20,14 @@ def filter_cdr(pos, synthetic_test, t=2):
     return pos[(adist >= t) & (bdist >= t)]
 
 
-def sample_train(train, test, synthetic_test, T=50, seed=42, ratio=5, include_other_peptides=False):
+def sample_train(train, test, synthetic_test, T=50, seed=42, ratio=5, include_other_peptides=False, verbose=False):
     np.random.seed(seed)
     l = test.CDR3a_extended.str.len()
     CDRA_MIN, CDRA_MAX = l.min(), l.max()
     l = test.CDR3b_extended.str.len()
     CDRB_MIN, CDRB_MAX = l.min(), l.max()
-    print('len(CDR3a) in', [CDRA_MIN, CDRA_MAX], 'len(CDR3n) in ', [CDRB_MIN, CDRB_MAX])
+    if verbose:
+        print('len(CDR3a) in', [CDRA_MIN, CDRA_MAX], 'len(CDR3b) in ', [CDRB_MIN, CDRB_MAX])
 
     pos = train[["Peptide", "CDR3b_extended", "CDR3a_extended"]].drop_duplicates()
     pos["y"] = 1
@@ -52,11 +53,11 @@ def sample_train(train, test, synthetic_test, T=50, seed=42, ratio=5, include_ot
         & (pos.CDR3b_extended.str[0] == "C")
         ]
 
-    print(f"{len(pos)} positive observations total")
-
     pos_filt = filter_cdr(pos, synthetic_test)
-    print(f"{len(pos_filt)} positive observations filtered")
-    print(pos_filt.Peptide.value_counts())
+    if verbose:
+        print(f"{len(pos)} positive observations total")
+        print(f"{len(pos_filt)} positive observations filtered")
+        print(pos_filt.Peptide.value_counts())
 
     rlist = []
     ppeps = []
@@ -68,8 +69,12 @@ def sample_train(train, test, synthetic_test, T=50, seed=42, ratio=5, include_ot
 
         potential_negs = pos_filt[pos_filt.Peptide != pep]
         potential_negs_filt = filter_cdr(potential_negs, pos_pep, t=2).copy()
-        print(pep, len(potential_negs), len(potential_negs_filt))
-        neg_sample = potential_negs_filt.sample(len(pos_pep) * ratio)
+        if verbose:
+            print(pep, len(pos_pep) * ratio, len(potential_negs), len(potential_negs_filt))
+        if len(pos_pep) * ratio >= len(potential_negs_filt):
+            neg_sample = potential_negs_filt.copy()
+        else:
+            neg_sample = potential_negs_filt.sample(len(pos_pep) * ratio)
         neg_sample["y"] = 0
         neg_sample["Peptide"] = pep
         rlist.append(neg_sample)

@@ -12,7 +12,7 @@ def dist(x, y):
     return distance(x[0], y[0])
 
 
-def sample_test(train, test, frac=0.05, fracneg=0.16, filter_lev=True, seed=42):
+def sample_test(train, test, ratio=5, frac=0.05, fracneg=0.16, filter_lev=True, seed=42, verbose=False):
     # train = train_vdjdb
     np.random.seed(seed)
 
@@ -20,7 +20,8 @@ def sample_test(train, test, frac=0.05, fracneg=0.16, filter_lev=True, seed=42):
     CDRA_MIN, CDRA_MAX = l.min(), l.max()
     l = test.CDR3b_extended.str.len()
     CDRB_MIN, CDRB_MAX = l.min(), l.max()
-    print('len(CDR3a) in', [CDRA_MIN, CDRA_MAX], 'len(CDR3n) in ', [CDRB_MIN, CDRB_MAX])
+    if verbose:
+        print('len(CDR3a) in', [CDRA_MIN, CDRA_MAX], 'len(CDR3n) in ', [CDRB_MIN, CDRB_MAX])
 
     pos = train[["Peptide", "CDR3b_extended", "CDR3a_extended"]].drop_duplicates()
     pos = pos[pos.Peptide.isin(test.Peptide)]
@@ -57,7 +58,6 @@ def sample_test(train, test, frac=0.05, fracneg=0.16, filter_lev=True, seed=42):
     rlist = []
 
     for i, pep in enumerate(peps.index):
-        print(pep)
         pep_positives = pos[pos.Peptide == pep].copy()
         pos_i = pd.MultiIndex.from_frame(pep_positives[cdrcols])
 
@@ -83,21 +83,23 @@ def sample_test(train, test, frac=0.05, fracneg=0.16, filter_lev=True, seed=42):
             adist, bdist = adist.min(axis=1), bdist.min(axis=1)
             # print(adist)
             # print(adist.shape)
-            print(train_neg.shape[0])
+            # print(train_neg.shape[0])
             train_neg = train_neg[(adist >= 3) & (bdist >= 3)]
-            print(train_neg.shape[0])
+            # print(train_neg.shape[0])
 
         if len(pep_positives) * frac > 10:
             print(pep, len(pep_positives), frac)
             pep_positives = pep_positives.sample(frac=frac, replace=False)
+        # else:
+            # continue
         # if len(pep_positives) > 70:
         #     pep_positives = pep_positives.sample(70)
 
         # if len(pep_positives) > Tpos:
         #     pep_positives = pep_positives.sample(Tpos, replace=False)
-
-        print(pep, len(pep_positives), len(train_neg))
-        sample_neg = train_neg.sample(min(len(pep_positives) * 5, len(train_neg)), replace=False)
+        if verbose:
+            print(pep, len(pep_positives), len(train_neg))
+        sample_neg = train_neg.sample(min(len(pep_positives) * ratio, len(train_neg)), replace=False)
         sample_neg["Peptide"] = pep
         sample_neg["y"] = 0
         # print(pep, len(pep_positives), len(sample_neg))

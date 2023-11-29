@@ -80,7 +80,10 @@ class BERTrand(BertPreTrainedModel):
         if labels is not None:
             loss_fct = FocalLoss(gamma=3, alpha=0.25, no_agg=True)
             loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
-            loss = torch.mean(loss * weights)
+            if weights is not None:
+                loss = torch.mean(loss * weights)
+            else:
+                loss = torch.mean(loss)
 
         if not return_dict:
             output = (logits,) + outputs[2:]
