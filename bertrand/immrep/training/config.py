@@ -14,7 +14,7 @@ BERT_CONFIG = BertConfig(
 
 BERT_CONFIG_PTCR = BertConfig(
     vocab_size=tokenizer.vocab_size,
-    max_position_embeddings=64,
+    max_position_embeddings=70,
     type_vocab_size=3,
     num_attention_heads=8,
     num_hidden_layers=8,
