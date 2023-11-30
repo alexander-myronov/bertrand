@@ -166,7 +166,9 @@ if __name__ == "__main__":
     test_set = read_test()
 
     results = []
-    for data_split in train_test_additional_generator(train_set, test_set, NTEST=args.n_splits):
+    data_splits = pd.read_pickle('/home/ardigen/Documents/bertrand/bertrand/notebooks/immrep/data_splits_additional7.pkl')
+    # data_splits = train_test_additional_generator(train_set, test_set, NTEST=args.n_splits)
+    for data_split in data_splits:
         X = data_split['train_sample'].reset_index(drop=True)
         X_test = data_split['test_sample'].reset_index(drop=True)
         X_val = X.groupby(['Peptide', 'y']).sample(frac=0.1)
