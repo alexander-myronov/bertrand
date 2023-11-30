@@ -37,11 +37,11 @@ SUPERVISED_TRAINING_ARGS = dict(
 )
 
 SUPERVISED_TRAINING_ARGS_PTCR = dict(
-    num_train_epochs=20,  # total number of training epochs
+    num_train_epochs=50,  # total number of training epochs
     per_device_train_batch_size=32,  # batch size per device during training
     per_device_eval_batch_size=256,  # batch size for evaluation
     warmup_ratio=0.05,  # number of warmup steps for learning rate scheduler
-    learning_rate=1e-5,  # learning rate
+    learning_rate=5e-5,  # learning rate
     weight_decay=1e-5,  # strength of weight decay
     logging_dir="./logs",  # directory for storing logs
     logging_steps=10,  # logging every 10 steps
