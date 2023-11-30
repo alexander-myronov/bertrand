@@ -194,6 +194,7 @@ if __name__ == "__main__":
             result_row['test_iteration'] = data_split['test_iteration']
             result_row['train_iteration'] = data_split['train_iteration']
             result_row['model'] = 'BERTrand(pep)'
+            result_row['roc'] = roc
             pep_results.append(result_row)
             y_pred_global.loc[pep_df_test.index] = y_pred_test
             print(f"Peptide {pep} AUC={roc:.3f}")
