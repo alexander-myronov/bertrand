@@ -174,9 +174,9 @@ if __name__ == "__main__":
         X_val = X.groupby(['Peptide', 'y']).sample(frac=0.1)
         X_train = X[~X.index.isin(X_val.index)]
 
-        X_train = X_train.sample(4 * 32).reset_index(drop=True)
-        X_val = X_val.sample(2 * 32).reset_index(drop=True)
-        X_test = X_test.sample(3 * 32).reset_index(drop=True)
+        # X_train = X_train.sample(4 * 32).reset_index(drop=True)
+        # X_val = X_val.sample(2 * 32).reset_index(drop=True)
+        # X_test = X_test.sample(3 * 32).reset_index(drop=True)
 
         train_dataset = PeptideTCRDataset(X_train)
         val_dataset = PeptideTCRDataset(X_val)
