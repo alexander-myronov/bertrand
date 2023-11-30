@@ -15,7 +15,7 @@ class PeptideTCRDataset(Dataset):
     def __getitem__(self, i):
         row = self.examples.iloc[i]
         ab = tokenizer.encode_plus(
-            " ".join(list(row.CDR3a)), " ".join(list(row.CDR3b))
+            " ".join(list(row.CDR3a_extended)), " ".join(list(row.CDR3b_extended))
         )
         pep = tokenizer.encode_plus(" ".join(list(row.Peptide)))
         pep['input_ids'] = pep['input_ids'] + ab['input_ids'][1:]
