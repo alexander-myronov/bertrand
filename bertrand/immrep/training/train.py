@@ -111,6 +111,9 @@ def train(
     if model_ckpt:
         logging.info(f"Loading model from {model_ckpt}")
         model = model_class.from_pretrained(model_ckpt)
+        for param in model.bert.parameters():
+            param.requires_grad = False
+
     else:
         raise NotImplementedError()
         logging.info("Initializing model from scratch")
