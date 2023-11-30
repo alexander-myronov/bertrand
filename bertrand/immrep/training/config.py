@@ -36,6 +36,18 @@ SUPERVISED_TRAINING_ARGS = dict(
     save_strategy="epoch",  # model is saved every epoch
 )
 
+SUPERVISED_TRAINING_ARGS_PTCR = dict(
+    num_train_epochs = 20,  # total number of training epochs
+    per_device_train_batch_size=32,  # batch size per device during training
+    per_device_eval_batch_size=256,  # batch size for evaluation
+    warmup_ratio=0.05,  # number of warmup steps for learning rate scheduler
+    learning_rate=1e-5,  # learning rate
+    weight_decay=1e-5,  # strength of weight decay
+    logging_dir="./logs",  # directory for storing logs
+    logging_steps=10,  # logging every 10 steps
+    evaluation_strategy="epoch",  # model is evaluated every epoch
+)
+
 # Training args for MLM
 MLM_TRAINING_ARGS = dict(
     num_train_epochs=100,  # total number of training epochs
