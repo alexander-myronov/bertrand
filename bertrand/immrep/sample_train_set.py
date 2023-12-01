@@ -98,7 +98,7 @@ def sample_additional(train, test, test_sample):
     similar_peps = pd.Series(peps[np.argsort(np.array(d))])
     # similar_peps = similar_peps[~similar_peps.isin(test.Peptide)]
     similar_peps = pd.Series(np.sort(d), index=similar_peps.values)
-    similar_peps = similar_peps[similar_peps <= 9]
+    similar_peps = similar_peps[similar_peps <= 10]
 
     counts = train.Peptide.value_counts().loc[similar_peps.index]
 
@@ -148,11 +148,24 @@ def sample_train_additional(train, test, synthetic_test, T=10, seed=42, ratio=5,
     ]
 
     pos_filt = filter_cdr(pos, synthetic_test)
+
+    # potential_tcr_negatives = (
+    #     pos_filt.groupby("Peptide")
+    #     .apply(lambda x: x.sample(frac=0.2) if len(x) >= 10 / 0.2 else x)
+    #     .reset_index(drop=True)
+    # )
+
+    potential_tcr_negatives = (
+        pos_filt.groupby("Peptide")
+        .apply(lambda x: x.sample(500) if len(x) >= 500 else x)
+        .reset_index(drop=True)
+    )
     # print(pos_filt.Peptide.value_counts())
     # raise Exception()
     if verbose:
         print(f"{len(pos)} positive observations total")
         print(f"{len(pos_filt)} positive observations filtered")
+        print(f"{len(potential_tcr_negatives)} potential negatives  filtered")
         print(pos_filt.Peptide.value_counts())
 
     rlist = []
@@ -164,8 +177,9 @@ def sample_train_additional(train, test, synthetic_test, T=10, seed=42, ratio=5,
         if len(pos_pep) > 500:
             pos_pep = pos_pep.sample(500).reset_index(drop=True)
 
-        potential_negs = pos_filt[pos_filt.Peptide != pep]
+        potential_negs = potential_tcr_negatives[potential_tcr_negatives.Peptide != pep]
         potential_negs_filt = filter_cdr(potential_negs, pos_pep, t=2).copy()
+
         if verbose:
             print(pep, len(pos_pep) * ratio, len(potential_negs), len(potential_negs_filt))
         if len(pos_pep) * ratio >= len(potential_negs_filt):

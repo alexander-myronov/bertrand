@@ -217,9 +217,9 @@ def sample_test_additional(train, test, ratio=5, frac=0.05, fracneg=0.16, filter
 
     peps = pd.Series(peps, index=peps)
     rlist = []
-
+    pos_gb = pos.groupby('Peptide')
     for i, pep in enumerate(peps.index):
-        pep_positives = pos[pos.Peptide == pep].copy()
+        pep_positives = pos_gb.get_group(pep).copy()
         pos_i = pd.MultiIndex.from_frame(pep_positives[cdrcols])
 
         dist_over_3 = peps.apply(lambda p: distance(p, pep) > 3)
