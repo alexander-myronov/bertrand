@@ -9,6 +9,7 @@ from transformers.tokenization_utils_base import BatchEncoding
 class PeptideTCRDataset(Dataset):
     def __init__(self, dataset: pd.DataFrame):
         self.examples = dataset
+        self.calc_weights()
 
     def __len__(self):
         return len(self.examples)

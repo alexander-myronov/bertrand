@@ -67,8 +67,9 @@ def get_training_args(output_dir: str) -> TrainingArguments:
 
 
 def train(
-        train_dataset: TCRDataset,
-        val_dataset: TCRDataset,
+        train_dataset: PeptideTCRDataset,
+        val_dataset: PeptideTCRDataset,
+        test_dataset: PeptideTCRDataset,
         model_class,
         model_ckpt: str,
         output_dir: str,
@@ -102,13 +103,22 @@ def train(
             best_epoch=best_epoch,
         )
 
+    joint_examples = pd.concat([
+        val_dataset.examples.assign(split='val'),
+        test_dataset.examples.assign(split='test')
+    ]).reset_index(drop=True)
+    joint_dataset = PeptideTCRDataset(joint_examples)
+
     def compute_metrics_and_save_predictions(eval_prediction):
         predictions.append(eval_prediction)
         preds = eval_prediction.predictions
         probs = torch.nn.functional.softmax(torch.tensor(preds), 1).numpy()[:, 1]
         labels = eval_prediction.label_ids
-        roc = roc_auc_score(labels, probs)
-        return {"roc": roc}
+        val_mask = joint_examples.split == 'val'
+        roc_val = roc_auc_score(labels[val_mask], probs[val_mask])
+        test_mask = joint_examples.split == 'test'
+        roc_test = roc_auc_score(labels[test_mask], probs[test_mask])
+        return {"roc_val": roc_val, "roc_test":roc_test}
 
     if model_ckpt:
         logging.info(f"Loading model from {model_ckpt}")
@@ -127,7 +137,7 @@ def train(
         model=model,
         args=training_args,
         train_dataset=train_dataset,
-        eval_dataset=val_dataset,
+        eval_dataset=joint_dataset,
         data_collator=data_collator,
         compute_metrics=compute_metrics_and_save_predictions,
     )
@@ -166,8 +176,8 @@ if __name__ == "__main__":
     test_set = read_test()
 
     results = []
-    # data_splits = pd.read_pickle('/home/ardigen/Documents/bertrand/bertrand/notebooks/immrep/data_splits_additional7.pkl')
-    data_splits = train_test_additional_generator(train_set, test_set, NTEST=args.n_splits)
+    data_splits = pd.read_pickle('/home/ardigen/Documents/bertrand/bertrand/notebooks/immrep/data_splits_additional7.pkl')
+    # data_splits = train_test_additional_generator(train_set, test_set, NTEST=args.n_splits)
     for data_split in data_splits:
         X = data_split['train_sample'].reset_index(drop=True)
         X_test = data_split['test_sample'].reset_index(drop=True)
@@ -185,7 +195,7 @@ if __name__ == "__main__":
         subdir_name = f"test={data_split['test_iteration']}_train={data_split['train_iteration']}"
         out_dir = os.path.join(args.output_dir, subdir_name)
         logging.info(f"Saving weights and predictions to {out_dir}")
-        train_result = train(train_dataset, val_dataset, BERTrand, args.model_ckpt, out_dir)
+        train_result = train(train_dataset, val_dataset, test_dataset, BERTrand, args.model_ckpt, out_dir)
         test_predictions = get_predictions(train_result['model'], test_dataset)
         y_pred_test = torch.nn.functional.softmax(torch.tensor(test_predictions.predictions), 1).numpy()[:, 1]
         roc = roc_auc_score(X_test.y, y_pred_test)
