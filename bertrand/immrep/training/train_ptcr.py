@@ -151,7 +151,7 @@ def train(
     metrics_eval.epoch = metrics_eval.epoch.astype(int) - 1
     metrics_eval.to_csv(os.path.join(output_dir, 'metrics.csv'))
     # metrics_eval.set_index("epoch", inplace=True)
-    best_epoch = metrics_eval.loc[metrics_eval.eval_roc.idxmax()]
+    best_epoch = metrics_eval.loc[metrics_eval.eval_roc_val.idxmax()]
     print('Best epoch', best_epoch.to_dict())
     best_checkpoint = os.path.join(output_dir, f"checkpoint-{int(best_epoch.step)}")
     shutil.copytree(best_checkpoint, best_checkpoint_dst, dirs_exist_ok=True)
