@@ -94,7 +94,7 @@ def train(
         metrics_eval.epoch = metrics_eval.epoch.astype(int) - 1
         # metrics_eval.set_index("epoch", inplace=True)
         metrics_eval.to_csv(os.path.join(output_dir, 'metrics.csv'))
-        best_epoch = metrics_eval.loc[metrics_eval.eval_roc.idxmax()]
+        best_epoch = metrics_eval.loc[metrics_eval.eval_roc_val.idxmax()]
         model = BERTrand.from_pretrained(best_checkpoint_dst)
         return dict(
             model=model,
