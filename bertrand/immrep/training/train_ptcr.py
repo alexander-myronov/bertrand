@@ -118,7 +118,9 @@ def train(
         roc_val = roc_auc_score(labels[val_mask], probs[val_mask])
         test_mask = joint_examples.split == 'test'
         roc_test = roc_auc_score(labels[test_mask], probs[test_mask])
-        return {"roc_val": roc_val, "roc_test":roc_test}
+        test_iso_mask = (joint_examples.split == 'test') & (~joint_examples.Peptide.isin(train_sample_peps))
+        roc_test_iso = roc_auc_score(labels[test_iso_mask], probs[test_iso_mask])
+        return {"roc_val": roc_val, "roc_test": roc_test, "roc_test_iso": roc_test_iso}
 
     if model_ckpt:
         logging.info(f"Loading model from {model_ckpt}")

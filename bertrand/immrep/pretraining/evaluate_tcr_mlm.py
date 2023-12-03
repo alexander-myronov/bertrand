@@ -29,7 +29,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def plot_loss(metrics: pd.DataFrame, eval_metrics: pd.DataFrame, out_file: str):
+def plot_loss(metrics: pd.DataFrame, eval_metrics: pd.DataFrame, out_file: str, best_epoch: int, best_steps: int):
     """
     Plots train and eval losses, saves the plot
     :param metrics: full set of metrics
@@ -40,8 +40,10 @@ def plot_loss(metrics: pd.DataFrame, eval_metrics: pd.DataFrame, out_file: str):
     fig, ax = plt.subplots()
     ax.plot(metrics.epoch, metrics.loss, label="train", c="blue")
     ax.plot(eval_metrics.epoch, eval_metrics.eval_loss, label="eval", c="green")
+    ax.axvline(best_epoch, linewidth=2, c='r', linestyle='--')
     ax.set_xlabel("Epoch")
     ax.set_ylabel("Loss")
+    ax.set_title(f"Best epoch {best_epoch}, best steps {best_steps}")
     fig.legend()
     fig.savefig(out_file)
 
@@ -54,12 +56,16 @@ if __name__ == "__main__":
     ckpt = get_last_ckpt(args.input_dir)
     metrics = load_metrics_df(ckpt)
 
+
     # Put evaluation metrics into a separate variable
     eval_metrics = metrics[~metrics.eval_loss.isna()].reset_index(drop=True)
-    plot_loss(metrics, eval_metrics, os.path.join(args.out_dir, "loss.png"))
 
+    best_epoch = eval_metrics.eval_loss.idxmin()
+    best_steps = eval_metrics.loc[best_epoch, "step"]
+    # best_steps = eval_metrics.step.iloc[-1]
 
-    best_steps = eval_metrics.step.iloc[-1]
+    plot_loss(metrics, eval_metrics, os.path.join(args.out_dir, "loss.png"), best_epoch=best_epoch, best_steps=best_steps)
+
     best_ckpt = os.path.join(args.input_dir, f"checkpoint-{best_steps}")
 
     logging.info(f"Copying {best_ckpt} to {args.out_dir}")
