@@ -62,7 +62,9 @@ if __name__ == "__main__":
 
     best_epoch = eval_metrics.eval_loss.idxmin()
     best_steps = eval_metrics.loc[best_epoch, "step"]
-    # best_steps = eval_metrics.step.iloc[-1]
+
+    best_steps = eval_metrics.step.iloc[-1]
+    best_epoch = eval_metrics.index[-1]
 
     plot_loss(metrics, eval_metrics, os.path.join(args.out_dir, "loss.png"), best_epoch=best_epoch, best_steps=best_steps)
 
