@@ -8,4 +8,4 @@ def pAUROC(X_test, probs):
 
 
 def mean_pAUROC(X_test, probs):
-    return {'mean_pauroc': pAUROC(X_test, probs).mean()}
+    return pAUROC(X_test, probs).mean()
