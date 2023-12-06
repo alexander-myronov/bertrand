@@ -143,7 +143,7 @@ def sample_additional(train, test):
     peps = train.Peptide.drop_duplicates()
     peps = peps[~peps.isin(test.Peptide)]
     rare_peptides, totally_missing_peptides = missing(train, test)
-    for tmp in totally_missing_peptides:
+    for tmp in rare_peptides + totally_missing_peptides:
         # print("%%%\n", tmp)
         d = np.array([distance(p1, tmp) for p1 in peps])
         # raise Exception()

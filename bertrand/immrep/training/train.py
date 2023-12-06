@@ -11,6 +11,7 @@ from transformers import TrainingArguments, DataCollatorWithPadding, Trainer
 from bertrand.immrep.training.cv import train_test_generator
 from bertrand.immrep.training.dataset_tcr import TCRDataset
 from bertrand.immrep.training.config import BERT_CONFIG, SUPERVISED_TRAINING_ARGS
+from bertrand.immrep.training.metrics import mean_pAUROC
 from bertrand.model.model import BERTrand
 from bertrand.model.tokenization import tokenizer
 from bertrand.training.evaluate import get_last_ckpt, load_metrics_df
@@ -106,7 +107,8 @@ def train(
         probs = torch.nn.functional.softmax(torch.tensor(preds), 1).numpy()[:, 1]
         labels = eval_prediction.label_ids
         roc = roc_auc_score(labels, probs)
-        return {"roc": roc}
+        mean_pauroc = mean_pAUROC(val_dataset.examples, probs)
+        return {"roc": roc, "mean_pauroc": mean_pauroc}
 
     if model_ckpt:
         logging.info(f"Loading model from {model_ckpt}")
@@ -164,7 +166,10 @@ if __name__ == "__main__":
     test_set = read_test()
 
     results = []
+    # for data_split in pd.read_pickle('/home/ardigen/Documents/bertrand/bertrand/notebooks/immrep/data_splits7.pkl'):
     for data_split in train_test_generator(train_set, test_set, NTEST=args.n_splits):
+        # data_split['test_sample'] = data_split['test_sample'].sample(1000, random_state=42).reset_index(drop=True)
+        # data_split['train_sample'] = data_split['train_sample'].sample(1000, random_state=42).reset_index(drop=True)
         pep_results = []
         y_pred_global = pd.Series(index=data_split['test_sample'].index, dtype=float)
         for pep, pep_df_train in data_split['train_sample'].groupby("Peptide", sort=False):
@@ -173,13 +178,9 @@ if __name__ == "__main__":
             pep_df_val = pep_df_train.groupby(['y']).sample(frac=0.1)
             pep_df_train_proper = pep_df_train[~pep_df_train.index.isin(pep_df_val.index)]
 
-            X_train = pep_df_train_proper[["CDR3a_extended", "CDR3b_extended", 'y']].reset_index(drop=True)
-            X_val = pep_df_val[["CDR3a_extended", "CDR3b_extended", 'y']].reset_index(drop=True)
-            X_test = pep_df_test[["CDR3a_extended", "CDR3b_extended", 'y']].reset_index(drop=True)
-
-            # X_train = X_train.sample(4*32).reset_index(drop=True)
-            # X_val = X_val.sample(2 * 32).reset_index(drop=True)
-            # X_test = X_test.sample(3 * 32).reset_index(drop=True)
+            X_train = pep_df_train_proper[["Peptide", "CDR3a_extended", "CDR3b_extended", 'y']].reset_index(drop=True)
+            X_val = pep_df_val[["Peptide", "CDR3a_extended", "CDR3b_extended", 'y']].reset_index(drop=True)
+            X_test = pep_df_test[["Peptide", "CDR3a_extended", "CDR3b_extended", 'y']].reset_index(drop=True)
 
             train_dataset = TCRDataset(X_train)
             val_dataset = TCRDataset(X_val)
@@ -192,21 +193,26 @@ if __name__ == "__main__":
             test_predictions = get_predictions(train_result['model'], test_dataset)
             y_pred_test = torch.nn.functional.softmax(torch.tensor(test_predictions.predictions), 1).numpy()[:, 1]
             roc = roc_auc_score(X_test.y, y_pred_test)
+            pauroc = roc_auc_score(X_test.y, y_pred_test, max_fpr=0.1)
             result_row = train_result['best_epoch']
             result_row['Peptide'] = pep
             result_row['test_iteration'] = data_split['test_iteration']
             result_row['train_iteration'] = data_split['train_iteration']
             result_row['model'] = 'BERTrand(pep)'
             result_row['roc'] = roc
+            result_row['pauroc'] = pauroc
             pep_results.append(result_row)
             y_pred_global.loc[pep_df_test.index] = y_pred_test
             print(f"Peptide {pep} AUC={roc:.3f}")
 
         not_na = ~y_pred_global.isna()
         roc_global = roc_auc_score(data_split['test_sample'].y[not_na], y_pred_global[not_na])
+        mean_pauroc = mean_pAUROC(data_split['test_sample'], y_pred_global)
         print('Global AUC ', roc_global)
+        print('Mean pAUC ', mean_pauroc)
         for r in pep_results:
             r['roc_global'] = roc_global
+            r['mean_pauroc'] = mean_pauroc
             results.append(r)
 
     results_df = pd.concat(results, axis=1).T

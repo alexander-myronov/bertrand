@@ -237,3 +237,5 @@ dmypy.json
 # data/
 results/
 .idea/
+
+bertrand/notebooks/immrep/*.pkl
