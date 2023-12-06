@@ -107,8 +107,8 @@ def train(
         probs = torch.nn.functional.softmax(torch.tensor(preds), 1).numpy()[:, 1]
         labels = eval_prediction.label_ids
         roc = roc_auc_score(labels, probs)
-        mean_pauroc = mean_pAUROC(val_dataset.examples, probs)
-        return {"roc": roc, "mean_pauroc": mean_pauroc}
+        pauroc = roc_auc_score(labels, probs, max_fpr=0.1)
+        return {"roc": roc, "pauroc": pauroc}
 
     if model_ckpt:
         logging.info(f"Loading model from {model_ckpt}")
@@ -141,7 +141,7 @@ def train(
     metrics_eval.epoch = metrics_eval.epoch.astype(int) - 1
     metrics_eval.to_csv(os.path.join(output_dir, 'metrics.csv'))
     # metrics_eval.set_index("epoch", inplace=True)
-    best_epoch = metrics_eval.loc[metrics_eval.eval_roc.idxmax()]
+    best_epoch = metrics_eval.loc[metrics_eval.eval_pauroc.idxmax()]
     print('Best epoch', best_epoch.to_dict())
     best_checkpoint = os.path.join(output_dir, f"checkpoint-{int(best_epoch.step)}")
     shutil.copytree(best_checkpoint, best_checkpoint_dst, dirs_exist_ok=True)
@@ -203,7 +203,7 @@ if __name__ == "__main__":
             result_row['pauroc'] = pauroc
             pep_results.append(result_row)
             y_pred_global.loc[pep_df_test.index] = y_pred_test
-            print(f"Peptide {pep} AUC={roc:.3f}")
+            print(f"Peptide {pep} AUC={roc:.3f} pAUC={pauroc:.3f}")
 
         not_na = ~y_pred_global.isna()
         roc_global = roc_auc_score(data_split['test_sample'].y[not_na], y_pred_global[not_na])
