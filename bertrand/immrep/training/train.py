@@ -207,7 +207,7 @@ if __name__ == "__main__":
 
         not_na = ~y_pred_global.isna()
         roc_global = roc_auc_score(data_split['test_sample'].y[not_na], y_pred_global[not_na])
-        mean_pauroc = mean_pAUROC(data_split['test_sample'], y_pred_global)
+        mean_pauroc = mean_pAUROC(data_split['test_sample'].loc[not_na], y_pred_global[not_na])
         print('Global AUC ', roc_global)
         print('Mean pAUC ', mean_pauroc)
         for r in pep_results:
