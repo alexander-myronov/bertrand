@@ -24,7 +24,7 @@ BERT_CONFIG_PTCR = BertConfig(
 
 # Training args for peptide:TCR binding prediction
 SUPERVISED_TRAINING_ARGS = dict(
-    num_train_epochs=20,  # total number of training epochs
+    num_train_epochs=100,  # total number of training epochs
     per_device_train_batch_size=12,  # batch size per device during training
     per_device_eval_batch_size=256,  # batch size for evaluation
     warmup_ratio=0.05,  # number of warmup steps for learning rate scheduler
