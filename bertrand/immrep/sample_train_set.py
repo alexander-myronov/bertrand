@@ -23,6 +23,8 @@ def filter_cdr(pos, synthetic_test, t=2):
 
 
 def sample_train(train, test, synthetic_test, T=50, seed=42, ratio=5, include_other_peptides=False, verbose=False):
+    if verbose:
+        print("Sampling train set")
     np.random.seed(seed)
     l = test.CDR3a_extended.str.len()
     CDRA_MIN, CDRA_MAX = l.min(), l.max()
@@ -87,13 +89,14 @@ def sample_train(train, test, synthetic_test, T=50, seed=42, ratio=5, include_ot
     assert {df.groupby(["Peptide", "CDR3b_extended", "CDR3a_extended"]).y.agg("nunique").max()} == {1}
     return df
 
+
 def sample_additional(train, test, test_sample):
     peps = train.Peptide.drop_duplicates()
     peps = np.setdiff1d(peps, test.Peptide)
     peps = np.setdiff1d(peps, test_sample.Peptide)
     missing_peptides, totally_missing_peptides = missing(train, test)
 
-    d = np.array([min([distance(p1, tmp) for tmp in missing_peptides+totally_missing_peptides]) for p1 in peps])
+    d = np.array([min([distance(p1, tmp) for tmp in missing_peptides + totally_missing_peptides]) for p1 in peps])
     # raise Exception()
     similar_peps = pd.Series(peps[np.argsort(np.array(d))])
     # similar_peps = similar_peps[~similar_peps.isin(test.Peptide)]
@@ -109,6 +112,7 @@ def sample_additional(train, test, test_sample):
     addition_train_peptides.remove('KLGGALQAK')
     return addition_train_peptides
     # raise Exception()
+
 
 def sample_train_additional(train, test, synthetic_test, T=10, seed=42, ratio=5, verbose=False):
     np.random.seed(seed)
@@ -145,7 +149,7 @@ def sample_train_additional(train, test, synthetic_test, T=10, seed=42, ratio=5,
         & (pos.CDR3b_extended.str[0] == "C")
         & pos.CDR3a_extended.str.fullmatch(regex)
         & pos.CDR3b_extended.str.fullmatch(regex)
-    ]
+        ]
 
     pos_filt = filter_cdr(pos, synthetic_test)
 
@@ -191,7 +195,7 @@ def sample_train_additional(train, test, synthetic_test, T=10, seed=42, ratio=5,
         rlist.append(neg_sample)
         plist.append(pos_pep)
 
-    df = pd.concat(plist+rlist)
+    df = pd.concat(plist + rlist)
     df = df.groupby(["Peptide", "CDR3b_extended", "CDR3a_extended"]).y.max().reset_index()
     assert {df.groupby(["Peptide", "CDR3b_extended", "CDR3a_extended"]).y.agg("nunique").max()} == {1}
     return df
@@ -200,6 +204,7 @@ def sample_train_additional(train, test, synthetic_test, T=10, seed=42, ratio=5,
 if __name__ == '__main__':
     from bertrand.immrep.data_sources import read_train_be, read_test
     from bertrand.immrep.sample_test_set import sample_test
+
     test = read_test()
     train = read_train_be()
     synthetic_test = sample_test(train, test, frac=0.07, fracneg=0.17, seed=43)

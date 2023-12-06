@@ -15,6 +15,8 @@ def dist(x, y):
 
 
 def sample_test(train, test, ratio=5, frac=0.05, fracneg=0.16, filter_lev=True, seed=42, verbose=False):
+    if verbose:
+        print("Sampling test set")
     # train = train_vdjdb
     np.random.seed(seed)
 
