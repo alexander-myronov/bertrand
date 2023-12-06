@@ -13,6 +13,7 @@ from bertrand.immrep.training.cv import train_test_additional_generator
 from bertrand.immrep.training.dataset_ptcr import PeptideTCRDataset
 from bertrand.immrep.training.dataset_tcr import TCRDataset
 from bertrand.immrep.training.config import BERT_CONFIG, SUPERVISED_TRAINING_ARGS_PTCR
+from bertrand.immrep.training.metrics import mean_pAUROC, pAUROC
 from bertrand.model.model import BERTrand
 from bertrand.model.tokenization import tokenizer
 from bertrand.training.evaluate import get_last_ckpt, load_metrics_df
@@ -94,7 +95,7 @@ def train(
         metrics_eval.epoch = metrics_eval.epoch.astype(int) - 1
         # metrics_eval.set_index("epoch", inplace=True)
         metrics_eval.to_csv(os.path.join(output_dir, 'metrics.csv'))
-        best_epoch = metrics_eval.loc[metrics_eval.eval_roc_val.idxmax()]
+        best_epoch = metrics_eval.loc[metrics_eval.eval_pauroc_val.idxmax()]
         model = BERTrand.from_pretrained(best_checkpoint_dst)
         return dict(
             model=model,
@@ -116,11 +117,19 @@ def train(
         labels = eval_prediction.label_ids
         val_mask = joint_examples.split == 'val'
         roc_val = roc_auc_score(labels[val_mask], probs[val_mask])
+        pauroc_val = mean_pAUROC(joint_dataset.examples[val_mask], probs[val_mask])
         test_mask = joint_examples.split == 'test'
         roc_test = roc_auc_score(labels[test_mask], probs[test_mask])
+        pauroc_test = mean_pAUROC(joint_dataset.examples[test_mask], probs[test_mask])
         test_iso_mask = (joint_examples.split == 'test') & (~joint_examples.Peptide.isin(train_sample_peps))
         roc_test_iso = roc_auc_score(labels[test_iso_mask], probs[test_iso_mask])
-        return {"roc_val": roc_val, "roc_test": roc_test, "roc_test_iso": roc_test_iso}
+        pauroc_test_iso = mean_pAUROC(joint_dataset.examples[test_iso_mask], probs[test_iso_mask])
+        return {"roc_val": roc_val,
+                "roc_test": roc_test,
+                "roc_test_iso": roc_test_iso,
+                'pauroc_val': pauroc_val,
+                'pauroc_test': pauroc_test,
+                'pauroc_test_iso': pauroc_test_iso}
 
     if model_ckpt:
         logging.info(f"Loading model from {model_ckpt}")
@@ -153,7 +162,7 @@ def train(
     metrics_eval.epoch = metrics_eval.epoch.astype(int) - 1
     metrics_eval.to_csv(os.path.join(output_dir, 'metrics.csv'))
     # metrics_eval.set_index("epoch", inplace=True)
-    best_epoch = metrics_eval.loc[metrics_eval.eval_roc_val.idxmax()]
+    best_epoch = metrics_eval.loc[metrics_eval.eval_pauroc_val.idxmax()]
     print('Best epoch', best_epoch.to_dict())
     best_checkpoint = os.path.join(output_dir, f"checkpoint-{int(best_epoch.step)}")
     shutil.copytree(best_checkpoint, best_checkpoint_dst, dirs_exist_ok=True)
@@ -178,9 +187,14 @@ if __name__ == "__main__":
     test_set = read_test()
 
     results = []
-    # data_splits = pd.read_pickle('/home/ardigen/Documents/bertrand/bertrand/notebooks/immrep/data_splits_additional7.pkl')
-    data_splits = train_test_additional_generator(train_set, test_set, NTEST=args.n_splits)
+    data_splits = pd.read_pickle(
+        '/home/ardigen/Documents/bertrand/bertrand/notebooks/immrep/data_splits_additional7.pkl')
+    # data_splits = train_test_additional_generator(train_set, test_set, NTEST=args.n_splits)
+
     for data_split in data_splits:
+        data_split['test_sample'] = data_split['test_sample'].sample(1000, random_state=42).reset_index(drop=True)
+        data_split['train_sample'] = data_split['train_sample'].sample(1000, random_state=42).reset_index(drop=True)
+
         X = data_split['train_sample'].reset_index(drop=True)
         X_test = data_split['test_sample'].reset_index(drop=True)
         X_val = X.groupby(['Peptide', 'y']).sample(frac=0.1)
@@ -201,18 +215,22 @@ if __name__ == "__main__":
         test_predictions = get_predictions(train_result['model'], test_dataset)
         y_pred_test = torch.nn.functional.softmax(torch.tensor(test_predictions.predictions), 1).numpy()[:, 1]
         roc = roc_auc_score(X_test.y, y_pred_test)
+        mean_pauroc = mean_pAUROC(X_test, y_pred_test)
 
         m = ~X_test.Peptide.isin(train_sample_peps)
         roc_iso = roc_auc_score(X_test[m].y, y_pred_test[m])
-
+        mean_pauroc_iso = mean_pAUROC(X_test[m], y_pred_test[m])
         result_row = train_result['best_epoch']
         result_row['test_iteration'] = data_split['test_iteration']
         result_row['train_iteration'] = data_split['train_iteration']
         result_row['model'] = 'BERTrand(pan)'
+        result_row['mean_pauroc'] = mean_pauroc
+        result_row['mean_pauroc_iso'] = mean_pauroc_iso
         result_row['roc'] = roc
         result_row['roc_iso'] = roc_iso
 
-        print(f"AUC={roc:.3f} AUCiso={roc_iso:.3f} ")
+        print(f"pAUC={mean_pauroc:.3f} pAUCiso={mean_pauroc_iso:.3f} AUC={roc:.3f} AUCiso={roc_iso:.3f} ")
+        print(pAUROC(X_test, y_pred_test))
 
         results.append(result_row)
 
