@@ -151,7 +151,6 @@ def train(
         eval_dataset=joint_dataset,
         data_collator=data_collator,
         compute_metrics=compute_metrics_and_save_predictions,
-        resume_from_checkpoint=True,
     )
 
     trainer.train()
