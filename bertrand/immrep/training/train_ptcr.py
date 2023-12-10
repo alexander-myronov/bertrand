@@ -197,7 +197,7 @@ if __name__ == "__main__":
 
         X = data_split['train_sample'].reset_index(drop=True)
         X_test = data_split['test_sample'].reset_index(drop=True)
-        X_val = X.groupby(['Peptide', 'y']).sample(frac=0.1)
+        X_val = X.groupby(['Peptide', 'y']).sample(frac=0.1, random_state=42)
         X_train = X[~X.index.isin(X_val.index)]
 
         # X_train = X_train.sample(4 * 32).reset_index(drop=True)

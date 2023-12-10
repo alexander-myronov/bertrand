@@ -101,20 +101,20 @@ def sample_additional(train, test, test_sample):
     similar_peps = pd.Series(peps[np.argsort(np.array(d))])
     # similar_peps = similar_peps[~similar_peps.isin(test.Peptide)]
     similar_peps = pd.Series(np.sort(d), index=similar_peps.values)
-    similar_peps = similar_peps[similar_peps <= 10]
+    # similar_peps = similar_peps[similar_peps <= 10]
 
     counts = train.Peptide.value_counts().loc[similar_peps.index]
 
     c = pd.concat([similar_peps, counts], axis=1)
     c.columns = ["dist", "count"]
-    c = c[(c["count"] >= 10)]
+    c = c[(c["count"] >= 5)]
     addition_train_peptides = list(c.index)
     addition_train_peptides.remove('KLGGALQAK')
     return addition_train_peptides
     # raise Exception()
 
 
-def sample_train_additional(train, test, synthetic_test, T=10, seed=42, ratio=5, verbose=False):
+def sample_train_additional(train, test, synthetic_test, T=5, seed=42, ratio=5, verbose=False):
     np.random.seed(seed)
     l = test.CDR3a_extended.str.len()
     CDRA_MIN, CDRA_MAX = l.min(), l.max()
@@ -151,7 +151,7 @@ def sample_train_additional(train, test, synthetic_test, T=10, seed=42, ratio=5,
         & pos.CDR3b_extended.str.fullmatch(regex)
         ]
 
-    pos_filt = filter_cdr(pos, synthetic_test)
+    pos_filt = filter_cdr(pos, synthetic_test, t=1)
 
     # potential_tcr_negatives = (
     #     pos_filt.groupby("Peptide")
